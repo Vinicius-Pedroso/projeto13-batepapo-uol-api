@@ -6,6 +6,8 @@ import { MongoClient } from "mongodb";
 const app = express();
 const joi = require('joi');
 
+let participationValid = true
+
 const mongoClient = new MongoClient("mongodb://localhost:27017");
 let db;
 mongoClient.connect().then(() => {
@@ -37,18 +39,52 @@ app.post("/participants", async (req, res) => {
         return;
     }
 
-    try {
-        await db.collection("BatePapoUol").insertOne(name)
-        res.sendStatus(201);
-      } catch (error) {
-        console.error(error);
-        res.sendStatus(500);
+    db.collection("users").findOne({
+        name: name
+    }).then(user => {
+        participationValid = false
+        console.log(user);
+        res.sendStatus(409);
+    });
+
+    if (participationValid === true) {
+        const user = {
+            name: 'xxx', 
+            lastStatus: Date.now()
+        }
+
+        try {
+            await db.collection("users").insertOne(user)
+            res.sendStatus(201);
+          } catch (error) {
+            console.error(error);
+            res.sendStatus(500);
+        }
+
+        const message = {
+            from: name, 
+            to: 'todos', 
+            text: 'entra na sala...', 
+            type: 'status',
+            time: 'HH:MM:SS'
+        }
+
+        try {
+            await db.collection("message").insertOne(message)
+            res.sendStatus(201);
+          } catch (error) {
+            console.error(error);
+            res.sendStatus(500);
+        }
     }
 
     res.status(201).send();
 });
 
 app.get("/participants", (req, res) => {
+    db.collection("users").find().toArray().then(users => {
+        console.log(users);
+    });
 
 })
 
