@@ -54,12 +54,14 @@ app.post("/participants", async (req, res) => {
         lastStatus: Date.now()
     }
 
+    const correctTime = timeConvert(user.lastStatus)
+
     const message = {
         from: name,
         to: 'todos',
         text: 'entra na sala...',
         type: 'status',
-        time: 'HH:MM:SS'
+        time: correctTime
     }
 
     await db.collection("users").insertOne(user)
@@ -86,7 +88,7 @@ app.get("/participants", (req, res) => {
 
 app.post("/messages", async (req, res) => {
     const { to, text, type } = req.body;
-    const from = req.header.user
+    const from = req.headers.user
 
     try {
 
@@ -111,12 +113,14 @@ app.post("/messages", async (req, res) => {
         res.sendStatus(422);
     }
 
+    const correctTime = timeConvert(user.lastStatus)
+
     const messageDone = {
         to: to,
         text: text,
         type: type,
         from: from,
-        time: 'HH:MM:SS'
+        time: correctTime
     }
 
     await db.collection("messages").insertOne(messageDone)
@@ -131,6 +135,8 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req,res) => {
+
+    try{
     const user = req.headers.user;
 
     const limit = parseInt(req.query.limit);
@@ -139,26 +145,25 @@ app.get("/messages", async (req,res) => {
         limitActive = true;
     }
 
+    let finalMessages =[]
+
     if (!limit){
-    await db.collection("message").find({to: user, from: user, type: "message", type: "status"}).toArray().then(users => {
+    await db.collection("messages").find({to: user, from: user, type: "message", type: "status"}).toArray().then(users => {
         res.send(users);
-    }).catch(error => {
-        res.sendStatus(500)
-        console.log(error)
-    });
+    })
     }
 
-    await db.collection("message").find({to: user, from: user, type: "message", type: "status"}).limit(limit).toArray().then(users => {
+    await db.collection("messages").find({to: user, from: user, type: "message", type: "status"}).limit(limit).toArray().then(users => {
         res.send(users);
-    }).catch(error => {
-        res.sendStatus(500)
-        console.log(error)
-    });
-
+    })
+    } catch (error){
+        console.error(error);
+        res.sendStatus(500);
+    }
 })
 
 app.post("/status", async (req, res) => {
-    const user = req.header.user
+    const user = req.header.User
 
     const verifyUser = await db.collection("users").findOne({
         name: user
@@ -175,15 +180,15 @@ app.post("/status", async (req, res) => {
     res.sendStatus(200)
 })
 
-// setInterval(inactiveUser(), 15000);
+setInterval(inactiveUser, 15000);
 
-// function inactiveUser(){
+function inactiveUser(){
     
-//     const timeLimit = Date.now() - 10000
+    const timeLimit = Date.now() - 10000
 
-//     db.collection("users").deleteMany({ lastStatus: { $lt: timeLimit}})
+    db.collection("users").deleteMany({ lastStatus: { $lt: timeLimit}})
 
-// }
+}
 
 function timeConvert (dateNow){
 
@@ -197,4 +202,4 @@ function timeConvert (dateNow){
 
 }
 
-app.listen(4000);
+app.listen(5000);
