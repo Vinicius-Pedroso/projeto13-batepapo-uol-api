@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import joi from 'joi'
+import dayjs from 'dayjs'
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 dotenv.config();
@@ -183,5 +184,17 @@ app.post("/status", async (req, res) => {
 //     db.collection("users").deleteMany({ lastStatus: { $lt: timeLimit}})
 
 // }
+
+function timeConvert (dateNow){
+
+    const ss = (dateNow/1000)%60
+    const mm = (dateNow/60000)%60
+    const hh = (dateNow/3600000)%24
+
+    const timeString = `${hh}:${mm}:${ss}`
+
+    return timeString;
+
+}
 
 app.listen(4000);
