@@ -11,7 +11,7 @@ app.use(express.json());
 
 let participationValid = true;
 
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+const mongoClient = new MongoClient(process.env.MONGO_URI);
 let db;
 mongoClient.connect().then(() => {
 	db = mongoClient.db("batePapoUol");
@@ -29,6 +29,9 @@ const messageSchema = joi.object({
     text: joi.string.required(),
     type: joi.string().valid('message','private_message').required()
 });
+
+const dayjs = require('dayjs')
+dayjs().format()
 
 app.post("/participants", async (req, res) => {
     const { name } = req.body;
@@ -51,7 +54,7 @@ app.post("/participants", async (req, res) => {
 
     if (participationValid === true) {
         const user = {
-            name: 'xxx', 
+            name: name, 
             lastStatus: Date.now()
         }
 
@@ -121,13 +124,24 @@ app.post("/messages", (req, res) => {
         text: text,
         type: type,
         from: from,
-        /*time: dayjsfunction*/
+        time: 'HH:MM:SS'
     }
 
     res.status(201).send();
 })
 
-app.listen(5000)
+app.post("/status", (req, res) => {
+    const user = req.header.user
 
-//{name: 'João', lastStatus: 12313123}
-//{from: 'João', to: 'Todos', text: 'oi galera', type: 'message', time: '20:04:37'}
+    db.collection("users").findOne({
+        name: user
+    }).then(user => {
+        console.log(user);
+    }).catch(error => {
+        res.sendStatus(404)
+    });
+
+    res.status(200).send();
+})
+
+app.listen(5000);

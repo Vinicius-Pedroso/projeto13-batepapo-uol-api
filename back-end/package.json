@@ -17,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/Vinicius-Pedroso/projeto13-batepapo-uol-api/issues"
   },
-  "homepage": "https://github.com/Vinicius-Pedroso/projeto13-batepapo-uol-api#readme"
+  "homepage": "https://github.com/Vinicius-Pedroso/projeto13-batepapo-uol-api#readme",
+  "dependencies": {
+    "dayjs": "^1.11.6",
+    "dotenv": "^16.0.3",
+    "mongodb": "^4.11.0"
+  }
 }
