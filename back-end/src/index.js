@@ -19,6 +19,8 @@ try {
     console.log(error)
 }
 
+dayjs().format()
+
 const participantSchema = joi.object({
     name: joi.string().required()
 });
