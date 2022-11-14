@@ -46,7 +46,7 @@ app.post("/participants", async (req, res) => {
     })
 
     if (verifyUser) {
-        res.sendStatus(409);
+        return res.sendStatus(409);
     }
 
     const user = {
@@ -66,11 +66,11 @@ app.post("/participants", async (req, res) => {
 
     await db.collection("users").insertOne(user)
     await db.collection("messages").insertOne(message)
-    res.sendStatus(201);
+    return res.sendStatus(201);
 
     } catch (error) {
         console.error(error);
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 
 });
@@ -80,8 +80,7 @@ app.get("/participants", (req, res) => {
     db.collection("users").find().toArray().then(users => {
         res.send(users);
     }).catch(error => {
-        res.sendStatus(500)
-        console.log(error)
+        return res.sendStatus(500)
     });
     
 });
@@ -102,7 +101,7 @@ app.post("/messages", async (req, res) => {
 
     if (messageValidation.error) {
     console.log(messageValidation.error.details)
-        res.sendStatus(422)
+        return res.sendStatus(422)
     }
 
     const verifyFrom = await db.collection("users").findOne({
@@ -110,7 +109,7 @@ app.post("/messages", async (req, res) => {
     })
 
     if (!verifyFrom) {
-        res.sendStatus(422);
+        return res.sendStatus(422);
     }
 
     const correctTime = timeConvert(user.lastStatus)
@@ -124,11 +123,11 @@ app.post("/messages", async (req, res) => {
     }
 
     await db.collection("messages").insertOne(messageDone)
-    res.sendStatus(201)
+    return res.sendStatus(201)
 
     } catch (error){
         console.error(error);
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 
     
@@ -148,17 +147,21 @@ app.get("/messages", async (req,res) => {
     let finalMessages =[]
 
     if (!limit){
-    await db.collection("messages").find({to: user, from: user, type: "message", type: "status"}).toArray().then(users => {
-        res.send(users);
+    await db.collection("messages").find().toArray().then(users => {
+        finalMessages.push(users);
     })
+    } else {
+        await db.collection("messages").find().limit(limit).toArray().then(users => {
+            finalMessages.push(users);
+        })
     }
 
-    await db.collection("messages").find({to: user, from: user, type: "message", type: "status"}).limit(limit).toArray().then(users => {
-        res.send(users);
-    })
+    const filtered = finalMessages.filter(messageFilter)
+
+    return res.send(filtered)
     } catch (error){
         console.error(error);
-        res.sendStatus(500);
+        return res.sendStatus(500);
     }
 })
 
@@ -170,14 +173,14 @@ app.post("/status", async (req, res) => {
     })
 
     if (!verifyUser){
-        res.sendStatus(404)
+        return res.sendStatus(404)
     }
 
     await db.collection("users").updateOne({ 
         name: user
     }, { $set: { "lastStatus": Date.now()} })
 
-    res.sendStatus(200)
+    return res.sendStatus(200)
 })
 
 setInterval(inactiveUser, 15000);
@@ -200,6 +203,25 @@ function timeConvert (dateNow){
 
     return timeString;
 
+}
+
+function messageFilter (value){
+    if (value.type === 'message'){
+    return value
+    }
+
+    if (value.type === 'status'){
+        return value
+    }
+
+    if (value.from === user){
+        return value
+    }
+
+    if (value.to === user){
+        return value
+    }
+    
 }
 
 app.listen(5000);
