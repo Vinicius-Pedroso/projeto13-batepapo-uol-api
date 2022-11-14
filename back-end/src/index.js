@@ -119,11 +119,14 @@ app.post("/messages", async (req, res) => {
     }
 
     await db.collection("messages").insertOne(messageDone)
+    res.sendStatus(201)
 
     } catch (error){
         console.error(error);
         res.sendStatus(500);
     }
+
+    
 })
 
 app.get("/messages", async (req,res) => {
@@ -153,18 +156,32 @@ app.get("/messages", async (req,res) => {
 
 })
 
-app.post("/status", (req, res) => {
+app.post("/status", async (req, res) => {
     const user = req.header.user
 
-    db.collection("users").findOne({
+    const verifyUser = await db.collection("users").findOne({
         name: user
-    }).then(user => {
-        console.log(user);
-    }).catch(error => {
-        res.sendStatus(404)
-    });
+    })
 
-    res.status(200).send();
+    if (!verifyUser){
+        res.sendStatus(404)
+    }
+
+    await db.collection("users").updateOne({ 
+        name: user
+    }, { $set: { "lastStatus": Date.now()} })
+
+    res.sendStatus(200)
 })
+
+// setInterval(inactiveUser(), 15000);
+
+// function inactiveUser(){
+    
+//     const timeLimit = Date.now() - 10000
+
+//     db.collection("users").deleteMany({ lastStatus: { $lt: timeLimit}})
+
+// }
 
 app.listen(4000);
